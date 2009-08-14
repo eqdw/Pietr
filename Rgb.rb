@@ -15,13 +15,13 @@ class Rgb
   #again, Thanks to Burke Libbey
   def hue
     m = @rgb.min
-    return HUES[x.map{|g|(g-m).zero? ? 0 : 1}.join]
+    return HUES[@rgb.map{|g|(g-m).zero? ? 0 : 1}.join]
   end
 
   def darkness
-    if @rgb.contains(0xFF) && @rgb.contains(0xC0)
+    if @rgb.include?(0xFF) && @rgb.include?(0xC0)
       0
-    elsif(@rgb.contains(0xFF))
+    elsif(@rgb.include?(0xFF))
       1
     else
       2
@@ -29,7 +29,7 @@ class Rgb
   end
 
   def -(other)
-    { hue => (other.hue - self.hue), darkness => (other.darkness - self.darkness)} 
+    { "hue" => ((other.hue - self.hue) % 6), "darkness" => ((other.darkness - self.darkness) % 3)} 
   end
   
   def red
@@ -44,11 +44,8 @@ class Rgb
     @rgb[2]
   end
 
-
-
-
-  
   def initialize(r, g, b)
+    @rgb = []
     @rgb[0] = r
     @rgb[1] = g
     @rgb[2] = b
