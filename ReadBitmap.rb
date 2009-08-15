@@ -13,6 +13,8 @@ end
 
 #read in an integer of size n from stream instr
 #assumes stream is LITTLE-endian
+
+
 def read_int(n, instr, unsigned = TRUE)
   arr = Array.new(n){|i| instr.readchar}
   if unsigned
