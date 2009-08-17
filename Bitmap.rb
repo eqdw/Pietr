@@ -1,7 +1,7 @@
 class Bitmap
 
 
-  attr_reader :image_size, :quality, :width, :height
+  attr_reader :quality, :width, :height, :invert_data
   attr_reader :horizontal_resolution, :vertical_resolution
 
 
@@ -71,7 +71,11 @@ class Bitmap
   puts "DIAGNOSTIC MESSAGE: Height is #{@height}"
           remaining_header -= 4
           readcount += 4
-          raise "Height must be positive" unless @height >= 0
+          raise "Height must be negative" if @height >= 0
+          if @height < 0
+            @invert_data = TRUE
+            @height = -@height
+          end
           
           @bmp = Array.new(@height){|i| Array.new(@width){|j| nil}}
           
@@ -131,15 +135,15 @@ class Bitmap
             row_counter = 0
             
             @width.times do |j|
-              r = f.readchar
-              g = f.readchar
               b = f.readchar
+              g = f.readchar
+              r = f.readchar
 
               readcount += 3
               row_counter += 3
 
               #BMP data is stored bottom-left to top-right
-              @bmp[@height-i-1][@width] = Rgb.new(r, g, b)
+              @bmp[i][j] = Rgb.new(r, g, b)
             end
 
             #skip over padding bytes (each row of BMP padded to 32-bit boundary
@@ -205,6 +209,7 @@ private
     val = 0
     arr.each_index{|i| val += (arr[i].to_i(2) * (256**i))}
     val += 1 if neg
+    val = -val if neg
     val
   end
 
