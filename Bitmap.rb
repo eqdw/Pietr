@@ -71,7 +71,7 @@ class Bitmap
   puts "DIAGNOSTIC MESSAGE: Height is #{@height}"
           remaining_header -= 4
           readcount += 4
-          raise "Height must be negative" if @height >= 0
+#          raise "Height must be negative" if @height >= 0
           if @height < 0
             @invert_data = TRUE
             @height = -@height
@@ -143,7 +143,7 @@ class Bitmap
               row_counter += 3
 
               #BMP data is stored bottom-left to top-right
-              @bmp[i][j] = Rgb.new(r, g, b)
+              @bmp[@height - i - 1][j] = Rgb.new(r, g, b)
             end
 
             #skip over padding bytes (each row of BMP padded to 32-bit boundary
