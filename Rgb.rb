@@ -51,6 +51,10 @@ class Rgb
     end
   end
 
+  def ==(other)
+    @rgb[0] == other.red && @rgb[1] == other.green && @rgb[2] == other.blue
+  end
+  
   def -(other)
     { "hue" => ((other.hue - self.hue) % 6), "darkness" => ((other.darkness - self.darkness) % 3)} 
   end
@@ -67,6 +71,10 @@ class Rgb
     @rgb[2]
   end
 
+  def copy
+    RGB.new(@rgb[0], @rgb[1], @rgb[2])
+  end
+  
   def initialize(r, g, b)
     @rgb = []
     @rgb[0] = r
