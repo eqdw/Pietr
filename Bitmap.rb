@@ -72,6 +72,7 @@ class Bitmap
           remaining_header -= 4
           readcount += 4
 #          raise "Height must be negative" if @height >= 0
+          @invert_data = FALSE
           if @height < 0
             @invert_data = TRUE
             @height = -@height
@@ -143,7 +144,11 @@ class Bitmap
               row_counter += 3
 
               #BMP data is stored bottom-left to top-right
-              @bmp[@height - i - 1][j] = Rgb.new(r, g, b)
+              unless @invert_data
+                @bmp[@height - i - 1][j] = Rgb.new(r, g, b)
+              else #if  @invert_data
+                @bmp[i][j] = Rgb.new(r, g, b)
+              end
             end
 
             #skip over padding bytes (each row of BMP padded to 32-bit boundary
