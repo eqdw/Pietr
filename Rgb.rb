@@ -2,7 +2,7 @@ class Rgb
 
   attr_reader :piet
 
-
+  
   COLOURS = {
     "light red" => [0xff, 0xc0, 0xc0],
     "red" => [0xff, 0x00, 0x00],

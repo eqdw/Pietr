@@ -1,7 +1,15 @@
+# INITIALIZE SHAPES
 
+##Some constants##
+@BLACK = Rgb.new(0,0,0)
+@WHITE = Rgb.new(255,255,255)
+
+##get bitmap##
 @BITMAP = Bitmap.new(ARGV[0])
 
 #should init to matrix if same size as @BITMAP, all 0
+#init to -2 because 0 is a valid shape index, and -1 I can't remember why
+#I'm not using it
 @shape_mask = Array.new(@BITMAP.height){ |i| Array.new(@BITMAP.width){|j| -2 }}
 
 @shapes = [] #stores all shapes indexed sequentially
@@ -9,25 +17,121 @@
 index = 0 #to give each shape unique index
 @shape_mask.size.times do |i|
   @shape_mask[0].size.times do |j|
-    if @shape_mask(i,j) == -2
+    if @BITMAP.pt(i,j) == @WHITE
+      @shape_mask[i][j] = "white"
+    elsif @BITMAP.pt(i,j) == @BLACK
+      @shape_mask[i][j] = "black"
+    elsif @shape_mask[i][j] == -2
       enumerate_shape(i,j,index)
       index += 1
     end
   end
 end
 
+#END INITIALIZE SHAPES
+
+#shapes are now initialized. We can start execution!
+
+
+@stack = []
+@cur = [0, 0]
+@next = [0, 0]
+@dp = "right"
+@cc = "right"
+##first time we run into trouble, toggle cc.
+##second time, rotate dp
+@toggle? = true
+
+#terminate when 8 loops without doing anything
+termcount = 0
+
+until termcount == 8
+
+  ##find current shape
+  curshape = @shape_mask[@cur[0], @cur[1]]
+
+  ##find codel where we're transitioning to next shape
+  ##set this as current pixel
+  @cur = @shapes[curshape].select(@dp, @cc)
+
+  #find next pixel
+  @next = next_point @cur
+
+  #several cases are now possible
+
+  #out of bounds
+  if out_of_bounds? @next
+    toggle
+    termcount += 1
+  elsif @shape_mask[@next[0]][@next[1]] == "black" 
+    #same as out-of-bounds, but I keep it separate for ease of refactoring
+    toggle
+    termcount += 1
+  elsif @shape_mask[@next[0]][@next[1]] == "white"
+    #slide in direction of DP until find a non-white
+    while @shape_mask[@next[0], @next[1]] == "white"
+      @cur = @next
+      @next = next_point @cur
+    end
+    #if it's black/edge, iterate main loop, it'll be taken care of
+    #if it's another colour, we want to be *in* that colour, or else it
+    #will try to execute an instruction
+    @cur = @next unless out_of_bounds? @next || @shape_mask[@next[0]][@next[1]] == "black"
+  else #move from colour to another colour
+
+    #get the colours of cur and next
+    nextshape = @shape_mask[@next[0]][@next[1]]
+
+    curcolour
+  
 
 
 
 
+def toggle
+  if @toggle?
+    @cc = (@cc == "right") ? "left" : "right"
+    @toggle? = false
+  else
+    @dp = case @dp
+            when "right" then "down"
+            when "down" then "left"
+            when "left" then "up"
+            when "up" then "right"
+    end
+    @toggle? = true
+  end
+end
 
+def next_point(pt)
+  case @dp
+    when "right" then [pt[0]+1, pt[1]]
+    when "left" then [pt[0]-1, pt[1]]
+    when "up" then [pt[0], pt[1]-1]
+    when "down" then [pt[0], pt[1]+1]
+  end
+end
+        
+def out_of_bounds?(pt)
+  if pt[0] < 0 || pt[0] >= @BITMAP.height
+    return false
+  elsif pt[1] < 0 || pt[1] >= @BITMAP.width
+    return false
+  else
+    return true
+  end
+end
+
+  
 #enumerates all pixels belonging to a shape that includes pixel (i,j)
 def enumerate_shape(i,j,index)
   stack = [[i,j]]
   colour = @BITMAP.pt(i,j).copy
-
+  pixcount = 0 #count number of pixels
+  
   until stack.empty?
     pt = stack.pop
+    pixcount += 1
     i = pt[0]
     j = pt[1]
 
@@ -143,7 +247,7 @@ def enumerate_shape(i,j,index)
     end
   end
 
-  params = [topright, topleft, bottomright, bottomleft, lefttop, leftbottom, righttop, rightbottom, colour]
+  params = [topright, topleft, bottomright, bottomleft, lefttop, leftbottom, righttop, rightbottom, colour, pixcount]
 
   @shapes << Shape.new(params)
 end
