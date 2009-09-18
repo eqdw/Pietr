@@ -82,8 +82,10 @@ until termcount == 8
     #get the colours of cur and next
     nextshape = @shape_mask[@next[0]][@next[1]]
 
-    curcolour
-  
+    curcolour = @shapes[curshape].colour
+    nextcolour = @shapes[nextshape].colour
+
+    
 
 
 
