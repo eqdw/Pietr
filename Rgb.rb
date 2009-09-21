@@ -33,7 +33,7 @@ class Rgb
     "001" => 4,
     "101" => 5
   }
-
+  
   #only defined on the Piet standard 18 colours
   #again, Thanks to Burke Libbey
   def hue
@@ -56,7 +56,7 @@ class Rgb
   end
   
   def -(other)
-    { "hue" => ((other.hue - self.hue) % 6), "darkness" => ((other.darkness - self.darkness) % 3)} 
+    { :hue => ((other.hue - self.hue) % 6), :darkness => ((other.darkness - self.darkness) % 3)} 
   end
   
   def red

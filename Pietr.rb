@@ -1,3 +1,21 @@
+#add custom method to array class to ease indexing 2d array
+class Array
+  def for_pt(p)
+    self[p[0]][p[1]]
+  end
+end
+
+#Initialize a function pointer table (except not like c)
+@FUNCTIONS = [
+              [:nop, :push, :pop],
+              [:add, :subtract, :multiply],
+              [:divide, :mod, :invert],
+              [:greater, :pointer, :switch],
+              [:duplicate, :roll, :in_num],
+              [:in_char, :out_num, :out_char]
+             ]
+
+
 # INITIALIZE SHAPES
 
 ##Some constants##
@@ -40,7 +58,7 @@ end
 @cc = "right"
 ##first time we run into trouble, toggle cc.
 ##second time, rotate dp
-@toggle? = true
+@toggle = true
 
 #terminate when 8 loops without doing anything
 termcount = 0
@@ -48,7 +66,7 @@ termcount = 0
 until termcount == 8
 
   ##find current shape
-  curshape = @shape_mask[@cur[0], @cur[1]]
+  curshape = @shape_mask.for_pt(cur)
 
   ##find codel where we're transitioning to next shape
   ##set this as current pixel
@@ -63,45 +81,168 @@ until termcount == 8
   if out_of_bounds? @next
     toggle
     termcount += 1
-  elsif @shape_mask[@next[0]][@next[1]] == "black" 
+  elsif @shape_mask.for_pt(@next) == "black" 
     #same as out-of-bounds, but I keep it separate for ease of refactoring
     toggle
     termcount += 1
-  elsif @shape_mask[@next[0]][@next[1]] == "white"
+  elsif @shape_mask.for_pt(@next) == "white"
     #slide in direction of DP until find a non-white
-    while @shape_mask[@next[0], @next[1]] == "white"
+    while @shape_mask.for_pt(@next) == "white"
       @cur = @next
       @next = next_point @cur
     end
     #if it's black/edge, iterate main loop, it'll be taken care of
     #if it's another colour, we want to be *in* that colour, or else it
     #will try to execute an instruction
-    @cur = @next unless out_of_bounds? @next || @shape_mask[@next[0]][@next[1]] == "black"
+    @cur = @next unless out_of_bounds? @next || @shape_mask.for_pt(@next) == "black"
   else #move from colour to another colour
 
     #get the colours of cur and next
-    nextshape = @shape_mask[@next[0]][@next[1]]
+    nextshape = @shape_mask.for_pt(@next)
 
     curcolour = @shapes[curshape].colour
     nextcolour = @shapes[nextshape].colour
 
+
+    execute_instr( (nextcolour - curcolour), curcolour.size)
+
+  end
+end
+
+def nop
+end
+
+def push(n)
+  @stack << n
+end
+
+def pop
+  @stack.pop
+end
+
+def add
+  a = @stack.pop
+  b = @stack.pop
+  @stack << (a + b)
+end
+
+def subtract
+  a = @stack.pop
+  b = @stack.pop
+  @stack << (b - a)
+end
+
+def multiply
+  a = @stack.pop
+  b = @stack.pop
+  @stack << (a * b)
+end
+
+def divide
+  a = @stack.pop
+  b = @stack.pop
+  @stack << (b / a)
+end
+
+def mod
+  a = @stack.pop
+  b = @stack.pop
+  @stack << (b % a)
+end
+
+def invert
+  a = @stack.pop
+  @stack << (a == 0 ? 1 : 0)
+end
+
+def greater
+  a = @stack.pop
+  b = @stack.pop
+  @stack << (b > a ? 1 : 0)
+end
+
+def pointer
+  a = @stack.pop % 4
+  a.times do |i|
+    rot_dp
+  end
+end
+
+def switch
+  a = @stack.pop % 2
+  a.times do |i|
+    tog_cc
+  end
+end
+
+def duplicate
+  @stack << @stack[-1]
+end
+
+def roll
+  num = @stack.pop
+  depth = @stack.pop
+
+  num.times do |i|
+    depth.times do |j|
+      tmp = @stack[0-j-1]
+      @stack[0-j-1] = @stack[0-j]
+      @stack[0-j] = tmp
+    end
+  end
+end
+
+def in_num
+  @stack << gets.to_i
+end
+
+def in_char
+  @stack << STDIN.getc
+end
+
+def out_num
+  a = @stack.pop
+  puts a
+end
+
+def out_char
+  a = @stack.pop
+  puts a.chr
+end
+
+
+
     
+  
+
+#executes the instruction keyed by the hue/darkness change
+def execute_instr(hsh, size)
+  sym = @FUNCTIONS[hsh[:hue]][hsh[:darkness]]
+  (sym == :push) ? method(sym).call(size) : method(sym).call
+end
+  
 
 
+def rot_dp
+  @dp = case @dp
+          when "right" then "down"
+          when "down" then "left"
+          when "left" then "up"
+          when "up" then "right"
+  end
+end
 
+def tog_cc
+  @cc = (@cc == "right") ? "left" : "right"
+end
 
 def toggle
-  if @toggle?
-    @cc = (@cc == "right") ? "left" : "right"
-    @toggle? = false
+  if @toggle
+   tog_cc
+    @toggle = false
   else
-    @dp = case @dp
-            when "right" then "down"
-            when "down" then "left"
-            when "left" then "up"
-            when "up" then "right"
-    end
-    @toggle? = true
+    rot_dp
+    @toggle = true
   end
 end
 
@@ -147,7 +288,7 @@ def enumerate_shape(i,j,index)
       stack << [i-1, j]
     end
 
-    if(i >= = && j > = &&                    #in bounds
+    if(i >= 0 && j > 0 &&                    #in bounds
        @shape_mask[i,j-1] == -2 &&           #not yet visited
        @BITMAP.pt(i,j) == @BITMAP.pt(i, j-1) #same colour
       )#visit pt(i, j-1)
